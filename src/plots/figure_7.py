@@ -20,9 +20,9 @@ model_experiment = {
     'GRU': {'exp01_gru': 96300, 'exp02_gru': 372600, 'exp03_gru': 578250,
             'exp04_gru': 828900, 'exp05_gru': 1124550, 'exp06_gru': 1465200,
             'exp07_gru': 1850850, 'exp08_gru': 2281500, 'exp09_gru': 2757150},
-    'CNN': {'exp01_cnn': 166756, 'exp02_cnn': 166224, 'exp03_cnn': 165732,
-            'exp04_cnn': 165220, 'exp05_cnn': 161636, 'exp06_cnn': 161124,
-            'exp07_cnn': 160612, 'exp08_cnn': 184164, 'exp09_cnn': 285540}
+    'CNN': {'exp01_cnn': 1144676, 'exp02_cnn': 1176676, 'exp03_cnn': 1274212,
+            'exp04_cnn': 1306212, 'exp05_cnn': 748388, 'exp06_cnn': 845924,
+            'exp07_cnn': 943460, 'exp08_cnn': 673380, 'exp09_cnn': 742244}
 }
 
 datasets = {'activemiles': 32548, 'hhar': 151840, 'fusion': 39523, 'mhealth': 8566,
