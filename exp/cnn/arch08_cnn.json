@@ -1,0 +1,84 @@
+{
+  "name": "CNN_8",
+  "modules": [
+    {
+      "name": "conv_layer_1",
+      "type": "conv2d",
+      "kernel": {
+        "channels": [1, 128],
+        "size": [5, 3],
+        "stride": [1, 3],
+        "init": "xavier"
+      }
+    },
+    {
+      "name": "pool_layer_1",
+      "type": "max2d",
+      "size": [2, 1],
+      "stride": [2, 1]
+    },
+    {
+      "name": "act_conv_layer_1",
+      "type": "activation",
+      "function": "relu"
+    },
+    {
+      "name": "conv_layer_2",
+      "type": "conv2d",
+      "kernel": {
+        "channels": [128, 256],
+        "size": [3, 1],
+        "stride": [1, 1],
+        "init": "xavier"
+      }
+    },
+    {
+      "name": "pool_layer_2",
+      "type": "max2d",
+      "size": [2, 1],
+      "stride": [2, 1]
+    },
+    {
+      "name": "act_conv_layer_2",
+      "type": "activation",
+      "function": "relu"
+    },
+    {
+      "name": "conv_layer_3",
+      "type": "conv2d",
+      "kernel": {
+        "channels": [256, 256],
+        "size": [3, 2],
+        "stride": [1, 1],
+        "init": "xavier"
+      }
+    },
+    {
+      "name": "pool_layer_3",
+      "type": "max2d",
+      "size": [3, 1],
+      "stride": [3, 1]
+    },
+    {
+      "name": "act_conv_layer_3",
+      "type": "activation",
+      "function": "relu"
+    },
+    {
+      "name": "flatten_layer",
+      "type": "flatten"
+    },
+    {
+      "name": "fc_layer_1",
+      "type": "fully_connected",
+      "input_size": 1792,
+      "output_size": 100,
+      "init": "xavier"
+    },
+    {
+      "name": "act_fc_layer_1",
+      "type": "activation",
+      "function": "relu"
+    }
+  ]
+}

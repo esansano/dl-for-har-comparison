@@ -1,0 +1,24 @@
+{
+  "name": "GRU_2",
+  "modules": [
+    {
+      "name": "gru_module",
+      "type": "gru",
+      "input_size": 6,
+      "hidden_size": 200,
+      "num_layers": 3,
+      "bias": true,
+      "batch_first": true,
+      "dropout": 0.5
+    },
+    {
+      "name": "getlast_layer",
+      "type": "last_value"
+    },
+    {
+      "name": "activation_layer_1",
+      "type": "activation",
+      "function": "relu"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "biLSTM_2",
+  "modules": [
+    {
+      "name": "lstm_module",
+      "type": "lstm",
+      "input_size": 6,
+      "hidden_size": 200,
+      "num_layers": 3,
+      "bias": true,
+      "batch_first": true,
+      "bidirectional": true,
+      "dropout": 0.5
+    },
+    {
+      "name": "getlast_layer",
+      "type": "last_value"
+    },
+    {
+      "name": "activation_layer_1",
+      "type": "activation",
+      "function": "relu"
+    }
+  ]
+}

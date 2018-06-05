@@ -1,0 +1,32 @@
+{
+  "name": "exp08_bilstm",
+  "type": "lstm",
+  "architecture_file": "exp/lstm/arch08_bilstm.json",
+  "gyroscope": true,
+  "preprocess": {
+    "type": "standardize"
+  },
+  "criterion": {
+    "type": "ce",
+    "parameters": {}
+  },
+  "optimizer": {
+    "type": "adagrad",
+    "parameters": {
+      "weight_decay": 0.00005
+    }
+  },
+  "learning_rate": 0.005,
+  "batch_size": 500,
+  "settings": {
+    "max_epochs": 2000,
+    "early_stop": 50,
+    "update": [
+      "epoch",
+      "loss_train",
+      "loss_validation",
+      "prediction",
+      "truth"
+    ]
+  }
+}

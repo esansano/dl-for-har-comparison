@@ -1,0 +1,32 @@
+{
+  "name": "exp01_cnn",
+  "type": "cnn",
+  "architecture_file": "exp/cnn/arch01_cnn.json",
+  "gyroscope": true,
+  "preprocess": {
+    "type": "standardize"
+  },
+  "criterion": {
+    "type": "ce",
+    "parameters": {}
+  },
+  "optimizer": {
+    "type": "adagrad",
+    "parameters": {
+      "weight_decay": 0.00005
+    }
+  },
+  "learning_rate": 0.005,
+  "batch_size": 1000,
+  "settings": {
+    "max_epochs": 2000,
+    "early_stop": 50,
+    "update": [
+      "epoch",
+      "loss_train",
+      "loss_validation",
+      "prediction",
+      "truth"
+    ]
+  }
+}
