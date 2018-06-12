@@ -283,7 +283,7 @@ def build_swell(seq_length):
     y = []
     file_pos_dict = {'Arm.xlsx': 'arm', 'Belt.xlsx': 'waist', 'Pocket.xlsx': 'pocket', 'Wrist.xlsx': 'wrist'}
     for file_name in file_pos_dict.keys():
-        data_np = pd.read_excel(file = os.path.join(paths_dict['swell'], file_name)).values
+        data_np = pd.read_excel(io=os.path.join(paths_dict['swell'], file_name)).values
         activities = datasets_activities['swell']
         device = device_list.index('smartphone')
         position = position_list.index(file_pos_dict[file_name])
@@ -363,7 +363,7 @@ def build_usc_had(seq_length):
     for subject in range(1, 15):
         for activity in activities:
             for trial in range(1, 6):
-                data = sio.loadmat("%sSubject%d%sa%dt%d.mat" % (paths_dict['usc-had'], subject, os.sep, activity, trial))
+                data = sio.loadmat("%s%sSubject%d%sa%dt%d.mat" % (paths_dict['usc-had'], os.sep, subject, os.sep, activity, trial))
                 data = np.array(data['sensor_readings'])[::2]  # Only even rows -> sampling rate 50Hz
                 for i in range(0, data.shape[0] - seq_length + 1, seq_length // 2):
                     i1 = i
@@ -399,7 +399,7 @@ def build_pamap2(seq_length):
     y = []
 
     for user in range(1, 10):
-        fn = '%s%s%d.dat' % (paths_dict['pamap2'], 'Protocol' + os.sep + 'subject10', user)
+        fn = '%s%s%d.dat' % (paths_dict['pamap2'], os.sep + 'Protocol' + os.sep + 'subject10', user)
         data = pd.read_csv(fn, header=None, delim_whitespace=True)
         data.sort_values(by=0)
         data = data.values
@@ -527,13 +527,13 @@ def build_realworld(seq_length):
 
     for subject in subjects:
         for activity in datasets_activities['realworld']:
-            acc_path = '{}proband{}{}data/acc_{}_csv{}'.format(paths_dict['realworld'],
-                                                              subject, os.sep, os.sep, activity, os.sep)
-            gyr_path = '{}proband{}{}data{}gyr_{}_csv{}'.format(paths_dict['realworld'],
-                                                                subject, os.sep, os.sep, activity, os.sep)
+            acc_path = '{}{}proband{}{}data{}acc_{}_csv'.format(paths_dict['realworld'], os.sep, subject,
+                                                                os.sep, os.sep, activity)
+            gyr_path = '{}{}proband{}{}data{}gyr_{}_csv'.format(paths_dict['realworld'], os.sep, subject,
+                                                                os.sep, os.sep, activity)
             for position in positions:
-                acc_file = '{}acc_{}_{}.csv'.format(acc_path, activity, position)
-                gyr_file = '{}Gyroscope_{}_{}.csv'.format(gyr_path, activity, position)
+                acc_file = os.path.join(acc_path, 'acc_{}_{}.csv'.format(activity, position))
+                gyr_file = os.path.join(gyr_path, 'Gyroscope_{}_{}.csv'.format(activity, position))
                 if os.path.isfile(acc_file) and os.path.isfile(gyr_file):
                     acc_data = pd.read_csv(acc_file, header=None).values[1:, 1:].astype(float)
                     gyr_data = pd.read_csv(gyr_file, header=None).values[1:, 1:].astype(float)
