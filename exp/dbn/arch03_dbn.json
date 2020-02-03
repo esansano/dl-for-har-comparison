@@ -1,0 +1,24 @@
+{
+  "name": "DBN_1",
+  "type": "dbn",
+  "modules": [
+    {
+      "name": "rbm_1",
+      "type": "rbm",
+      "size": 512,
+      "act": "relu"
+    },
+    {
+      "name": "rbm_2",
+      "type": "rbm",
+      "size": 512,
+      "act": "relu"
+    },
+    {
+      "name": "rbm_3",
+      "type": "rbm",
+      "size": 512,
+      "act": "relu"
+    }
+  ]
+}

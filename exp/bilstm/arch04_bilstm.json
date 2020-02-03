@@ -1,5 +1,6 @@
 {
-  "name": "lstm_300x3",
+  "name": "biLSTM_4",
+  "type": "rnn",
   "modules": [
     {
       "name": "lstm_module",

@@ -1,5 +1,6 @@
 {
   "name": "GRU_1",
+  "type": "rnn",
   "modules": [
     {
       "name": "gru_module",

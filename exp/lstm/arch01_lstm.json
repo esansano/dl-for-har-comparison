@@ -1,5 +1,6 @@
 {
   "name": "LSTM_01",
+  "type": "rnn",
   "modules": [
     {
       "name": "lstm_module",

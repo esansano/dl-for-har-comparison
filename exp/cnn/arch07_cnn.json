@@ -1,5 +1,6 @@
 {
   "name": "CNN_7",
+  "type": "cnn",
   "modules": [
     {
       "name": "conv_layer_1",
