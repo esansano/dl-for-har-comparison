@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
-from pytorchlab import models as m
+from src.lab import models as m
 from torch.autograd import Variable
 
 

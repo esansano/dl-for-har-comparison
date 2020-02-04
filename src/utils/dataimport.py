@@ -213,6 +213,52 @@ def build_mhealth(seq_length):
     save_data(acc_data, gyr_data, y, 'mhealth', seq_length)
 
 
+def build_mhealth_with_user(seq_length):
+    ankle_columns_acc = [5, 6, 7]
+    ankle_columns_gyr = [8, 9, 10]
+    arm_columns_acc = [14, 15, 16]
+    arm_columns_gyr = [17, 18, 19]
+    data_files = ['mHealth_subject' + str(i + 1) + '.log' for i in range(10)]
+    x_acc = []
+    x_gyr = []
+    y = []
+    u = []
+    user_id = 0
+    for data_file in data_files:
+        file = os.path.join(paths_dict['mhealth'], data_file)
+        user_id += 1
+        data_np = pd.read_csv(file, sep='\t').values
+        activities = range(1, len(datasets_activities['mhealth']) + 1)
+        for activity in activities:
+            act_np = data_np[data_np[:, 23] == activity, :]
+
+            print('user: %d, device: %d, activity: %d, data length: %d' %
+                  (user_id, device_list.index('imu'), activity, act_np.shape[0]))
+
+            for index in range(0, act_np.shape[0] - seq_length + 1, seq_length // 2):
+                x_acc.append(act_np[index:(index + seq_length), ankle_columns_acc])
+                x_gyr.append(act_np[index:(index + seq_length), ankle_columns_gyr])
+                y.append([device_list.index('imu'), position_list.index('ankle'), activity - 1])
+                u.append(user_id)
+                x_acc.append(act_np[index:(index + seq_length), arm_columns_acc])
+                x_gyr.append(act_np[index:(index + seq_length), arm_columns_gyr])
+                y.append([device_list.index('imu'), position_list.index('wrist'), activity - 1])
+                u.append(user_id)
+
+    acc_data = np.array(x_acc, dtype=float)
+    gyr_data = np.array(x_gyr, dtype=float)
+    y = np.array(y)[:, 2]
+    u = np.array(u)
+
+    print("MHEALTH:")
+    print("acc", acc_data.shape)
+    print("gyr", gyr_data.shape)
+    print("y", y.shape)
+    print("u", u.shape)
+
+    return acc_data, gyr_data, y, u
+
+
 def build_fusion(seq_length):
     lpocket_columns_acc = [1, 2, 3]
     lpocket_columns_gyr = [7, 8, 9]
@@ -275,6 +321,78 @@ def build_fusion(seq_length):
     print("y", y.shape)
 
     save_data(acc_data, gyr_data, y, 'fusion', seq_length)
+
+
+def build_fusion_with_user(seq_length):
+    lpocket_columns_acc = [1, 2, 3]
+    lpocket_columns_gyr = [7, 8, 9]
+    rpocket_columns_acc = [15, 16, 17]
+    rpocket_columns_gyr = [21, 22, 23]
+    wrist_columns_acc = [29, 30, 31]
+    wrist_columns_gyr = [35, 36, 37]
+    arm_columns_acc = [43, 44, 45]
+    arm_columns_gyr = [49, 50, 51]
+    belt_columns_acc = [57, 58, 59]
+    belt_columns_gyr = [63, 64, 65]
+    activity_column = 69
+    x_acc = []
+    x_gyr = []
+    y = []
+    u = []
+    data_files = ['Participant_' + str(i + 1) + '.csv' for i in range(10)]
+    user_id = 1
+    for data_file in data_files:
+        file = os.path.join(paths_dict['fusion'], data_file)
+        data_np = pd.read_csv(file, skiprows=[1], header=None).values[1:, :]
+        activities = datasets_activities['fusion']
+        for activity in activities:
+            act_np = data_np[data_np[:, activity_column] == activity, :]
+            act = activities.index(activity)
+
+            for index in range(0, act_np.shape[0] - seq_length + 1, seq_length // 2):
+                # Left pocket
+                x_acc.append(act_np[index:(index + seq_length), lpocket_columns_acc])
+                x_gyr.append(act_np[index:(index + seq_length), lpocket_columns_gyr])
+                y.append([device_list.index('smartphone'), position_list.index('pocket'), act])
+                u.append(user_id)
+                # Right pocket
+                x_acc.append(act_np[index:(index + seq_length), rpocket_columns_acc])
+                x_gyr.append(act_np[index:(index + seq_length), rpocket_columns_gyr])
+                y.append([device_list.index('smartphone'), position_list.index('pocket'), act])
+                u.append(user_id)
+                # Wrist
+                x_acc.append(act_np[index:(index + seq_length), wrist_columns_acc])
+                x_gyr.append(act_np[index:(index + seq_length), wrist_columns_gyr])
+                y.append([device_list.index('smartphone'), position_list.index('wrist'), act])
+                u.append(user_id)
+                # Wrist
+                x_acc.append(act_np[index:(index + seq_length), arm_columns_acc])
+                x_gyr.append(act_np[index:(index + seq_length), arm_columns_gyr])
+                y.append([device_list.index('smartphone'), position_list.index('arm'), act])
+                u.append(user_id)
+                # Waist
+                x_acc.append(act_np[index:(index + seq_length), belt_columns_acc])
+                x_gyr.append(act_np[index:(index + seq_length), belt_columns_gyr])
+                y.append([device_list.index('smartphone'), position_list.index('waist'), act])
+                u.append(user_id)
+
+            print('user: %d, device: %d, activity: %d, data length: %d' %
+                  (user_id, device_list.index('smartphone'), act, act_np.shape[0]))
+
+        user_id += 1
+
+    acc_data = np.array(x_acc, dtype=float)
+    gyr_data = np.array(x_gyr, dtype=float)
+    y = np.array(y)[:, 2]
+    u = np.array(u)
+
+    print("FUSION:")
+    print("acc", acc_data.shape)
+    print("gyr", gyr_data.shape)
+    print("y", y.shape)
+    print("u", u.shape)
+
+    return acc_data, gyr_data, y, u
 
 
 def build_swell(seq_length):
@@ -352,6 +470,47 @@ def build_uci_har(seq_length):
     save_data(acc_data, gyr_data, y, 'uci-har', seq_length)
 
 
+def build_uci_har_with_user(seq_length):
+    x_acc = []
+    x_gyr = []
+    y = []
+    u = []
+    key_file_name = os.path.join(paths_dict['uci-har'], 'RawData', 'labels.txt')
+    activities = range(1, len(datasets_activities['uci-har']) + 1)
+    for key_line in open(key_file_name):
+        keys = key_line[:-1].split(' ')
+        activity = int(keys[2])
+        if activity not in activities:
+            continue
+        keys[0] = '0%s' % keys[0] if int(keys[0]) < 10 else keys[0]
+        keys[1] = '0%s' % keys[1] if int(keys[1]) < 10 else keys[1]
+        acc_file_name = '%s%sRawData%sacc_exp%s_user%s.txt' % (paths_dict['uci-har'], os.sep, os.sep, keys[0], keys[1])
+        gyr_file_name = '%s%sRawData%sgyro_exp%s_user%s.txt' % (paths_dict['uci-har'], os.sep, os.sep, keys[0], keys[1])
+        acc_np = pd.read_csv(acc_file_name, sep=' ', header=None).values[int(keys[3]):(int(keys[4]) + 1)]
+        gyr_np = pd.read_csv(gyr_file_name, sep=' ', header=None).values[int(keys[3]):(int(keys[4]) + 1)]
+        print(acc_np.shape)
+        print(gyr_np.shape)
+
+        for index in range(0, acc_np.shape[0] - seq_length + 1, seq_length // 2):
+            x_acc.append(acc_np[index:(index + seq_length), :])
+            x_gyr.append(gyr_np[index:(index + seq_length), :])
+            y.append([device_list.index('smartphone'), position_list.index('waist'), activity - 1])
+            u.append(int(keys[1]))
+
+    acc_data = np.array(x_acc, dtype=float)
+    gyr_data = np.array(x_gyr, dtype=float)
+    y = np.array(y)[:, 2]
+    u = np.array(u)
+
+    print("UCI-HAR:")
+    print("acc", acc_data.shape)
+    print("gyr", gyr_data.shape)
+    print("y", y.shape)
+    print("u", u.shape)
+
+    return acc_data, gyr_data, y, u
+
+
 def build_usc_had(seq_length):
     x_acc = []
     x_gyr = []
@@ -363,7 +522,7 @@ def build_usc_had(seq_length):
     for subject in range(1, 15):
         for activity in activities:
             for trial in range(1, 6):
-                data = sio.loadmat("%s%sSubject%d%sa%dt%d.mat" % (paths_dict['usc-had'], os.sep, subject, os.sep, activity, trial))
+                data = sio.loadmat("%s/Subject%d%sa%dt%d.mat" % (paths_dict['usc-had'], subject, os.sep, activity, trial))
                 data = np.array(data['sensor_readings'])[::2]  # Only even rows -> sampling rate 50Hz
                 for i in range(0, data.shape[0] - seq_length + 1, seq_length // 2):
                     i1 = i
@@ -527,13 +686,11 @@ def build_realworld(seq_length):
 
     for subject in subjects:
         for activity in datasets_activities['realworld']:
-            acc_path = '{}{}proband{}{}data{}acc_{}_csv'.format(paths_dict['realworld'], os.sep, subject,
-                                                                os.sep, os.sep, activity)
-            gyr_path = '{}{}proband{}{}data{}gyr_{}_csv'.format(paths_dict['realworld'], os.sep, subject,
-                                                                os.sep, os.sep, activity)
+            acc_path = '{}/proband{}/data/acc_{}_csv/'.format(paths_dict['realworld'], subject, activity, os.sep)
+            gyr_path = '{}/proband{}/data/gyr_{}_csv/'.format(paths_dict['realworld'], subject, activity, os.sep)
             for position in positions:
-                acc_file = os.path.join(acc_path, 'acc_{}_{}.csv'.format(activity, position))
-                gyr_file = os.path.join(gyr_path, 'Gyroscope_{}_{}.csv'.format(activity, position))
+                acc_file = '{}acc_{}_{}.csv'.format(acc_path, activity, position)
+                gyr_file = '{}Gyroscope_{}_{}.csv'.format(gyr_path, activity, position)
                 if os.path.isfile(acc_file) and os.path.isfile(gyr_file):
                     acc_data = pd.read_csv(acc_file, header=None).values[1:, 1:].astype(float)
                     gyr_data = pd.read_csv(gyr_file, header=None).values[1:, 1:].astype(float)
@@ -568,6 +725,49 @@ def build_realworld(seq_length):
     save_data(acc_data, gyr_data, y, 'realworld', seq_length)
 
 
+def build_skoda(seq_length):
+
+    dir_path = os.path.join(paths_dict['skoda'], 'SkodaMiniCP_2015_08')
+    left_path = os.path.join(dir_path, 'left_classall_clean.mat')
+    right_path = os.path.join(dir_path, 'right_classall_clean.mat')
+
+    left_data_np = sio.loadmat(left_path)['left_classall_clean']
+    right_data_np = sio.loadmat(right_path)['right_classall_clean']
+    left_classes = left_data_np[:, 0]
+    right_classes = right_data_np[:, 0]
+
+    # disregard sensor ids and raw data
+    keep_cols = list(itertools.chain(*[col for col in [[i, i + 1, i + 2] for i in range(2, 68, 7)]]))
+    left_data_np = left_data_np[:, keep_cols].astype(np.float) / 1000
+    right_data_np = right_data_np[:, keep_cols].astype(np.float) / 1000
+
+    sampling_rate = 98
+    length = int((seq_length / 50) * sampling_rate)
+    x_acc_l = []
+    x_acc_r = []
+    y_l = []
+    y_r = []
+
+    for i in range(0, left_data_np.shape[0] - length + 1, length // 2):
+        lbll = left_classes[i:(i + length)]
+        if len(np.unique(lbll)) == 1:
+            y_l.append(0 if lbll[0] == 32 else lbll[0] - 47)
+            x_acc_l.append(__downsample(left_data_np[i:(i + length)], seq_length))
+
+    for i in range(0, right_data_np.shape[0] - length + 1, length // 2):
+        lblr = right_classes[i:(i + length)]
+        if len(np.unique(lblr)) == 1:
+            y_r.append(0 if lblr[0] == 32 else lblr[0] - 47)
+            x_acc_r.append(__downsample(right_data_np[i:(i + length)], seq_length))
+
+    x_acc_l = np.array(x_acc_l)
+    x_acc_r = np.array(x_acc_r)
+    y_l = np.array(y_l)
+    y_r = np.array(y_r)
+
+    save_data_skoda(x_acc_l, x_acc_r, y_l, y_r, 'skoda', seq_length)
+
+
 def __downsample(data, seq_length):
     step = data.shape[0] / seq_length
     index = 0.0
@@ -587,35 +787,56 @@ def __add_magnitude(data):
     return np.array(new_data)
 
 
-def load_saved_data(dataset_name, seq_length=100, gyro=False, preprocess=None):
-    acc_file_tr = '{}{}x_acc_{}_train.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
-    gyr_file_tr = '{}{}x_gyr_{}_train.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
-    y_file_tr = '{}{}y_{}_train.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
+def load_saved_data(dataset_name, seq_length=100, gyro=False, preprocess=None, skoda='left'):
+    if dataset_name == 'skoda':
+        acc_file_tr = '{}{}x_acc_{}_{}_train.npy'.format(paths_dict[dataset_name], os.sep, skoda, seq_length)
+        y_file_tr = '{}{}y_{}_{}_train.npy'.format(paths_dict[dataset_name], os.sep, skoda, seq_length)
 
-    acc_file_ts = '{}{}x_acc_{}_test.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
-    gyr_file_ts = '{}{}x_gyr_{}_test.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
-    y_file_ts = '{}{}y_{}_test.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
+        acc_file_ts = '{}{}x_acc_{}_{}_test.npy'.format(paths_dict[dataset_name], os.sep, skoda, seq_length)
+        y_file_ts = '{}{}y_{}_{}_test.npy'.format(paths_dict[dataset_name], os.sep, skoda, seq_length)
 
-    print(acc_file_tr)
+        print(acc_file_tr)
+        if os.path.isfile(acc_file_tr) and os.path.isfile(y_file_tr) and os.path.isfile(acc_file_ts) \
+                and os.path.isfile(y_file_ts):
+            print('Loading data from ' + paths_dict[dataset_name])
+            acc_data_train = np.load(acc_file_tr)
+            acc_data_test = np.load(acc_file_ts)
 
-    if os.path.isfile(acc_file_tr) and os.path.isfile(gyr_file_tr) and os.path.isfile(y_file_tr) \
-            and os.path.isfile(acc_file_ts) and os.path.isfile(gyr_file_ts) and os.path.isfile(y_file_ts):
-        print('Loading data from ' + paths_dict[dataset_name])
-        acc_data_train = np.load(acc_file_tr)
-        acc_data_test = np.load(acc_file_ts)
-        gyr_data_train = None
-        gyr_data_test = None
-        if gyro:
-            gyr_data_train = np.load(gyr_file_tr)
-            gyr_data_test = np.load(gyr_file_ts)
+            y_train = np.load(y_file_tr)
+            y_test = np.load(y_file_ts)
 
-        y_train = np.load(y_file_tr)
-        y_test = np.load(y_file_ts)
+            acc_data_train, acc_data_test = preprocess_data(acc_data_train, acc_data_test, preprocess)
 
-        acc_data_train, acc_data_test = preprocess_data(acc_data_train, acc_data_test, preprocess)
-        gyr_data_train, gyr_data_test = preprocess_data(gyr_data_train, gyr_data_test, preprocess)
+            return Dataset(acc_data_train, None, y_train, acc_data_test, None, y_test)
+    else:
+        acc_file_tr = '{}{}x_acc_{}_train.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
+        gyr_file_tr = '{}{}x_gyr_{}_train.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
+        y_file_tr = '{}{}y_{}_train.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
 
-        return Dataset(acc_data_train, gyr_data_train, y_train, acc_data_test, gyr_data_test, y_test)
+        acc_file_ts = '{}{}x_acc_{}_test.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
+        gyr_file_ts = '{}{}x_gyr_{}_test.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
+        y_file_ts = '{}{}y_{}_test.npy'.format(paths_dict[dataset_name], os.sep, seq_length)
+
+        print(acc_file_tr)
+
+        if os.path.isfile(acc_file_tr) and os.path.isfile(gyr_file_tr) and os.path.isfile(y_file_tr) \
+                and os.path.isfile(acc_file_ts) and os.path.isfile(gyr_file_ts) and os.path.isfile(y_file_ts):
+            print('Loading data from ' + paths_dict[dataset_name])
+            acc_data_train = np.load(acc_file_tr)
+            acc_data_test = np.load(acc_file_ts)
+            gyr_data_train = None
+            gyr_data_test = None
+            if gyro:
+                gyr_data_train = np.load(gyr_file_tr)
+                gyr_data_test = np.load(gyr_file_ts)
+
+            y_train = np.load(y_file_tr)
+            y_test = np.load(y_file_ts)
+
+            acc_data_train, acc_data_test = preprocess_data(acc_data_train, acc_data_test, preprocess)
+            gyr_data_train, gyr_data_test = preprocess_data(gyr_data_train, gyr_data_test, preprocess)
+
+            return Dataset(acc_data_train, gyr_data_train, y_train, acc_data_test, gyr_data_test, y_test)
     return None
 
 
@@ -650,6 +871,43 @@ def save_data(acc_data, gyr_data, y, dataset_name, seq_length):
     np.save(y_file_ts, y[ind_ts])
 
 
+def save_data_skoda(acc_data_left, acc_data_right, y_left, y_right, dataset_name, seq_length):
+    # Training and validation data (80%)
+    acc_left_tv = '{}{}x_acc_left_{}_train'.format(paths_dict[dataset_name], os.sep, seq_length)
+    acc_right_tv = '{}{}x_acc_right_{}_train'.format(paths_dict[dataset_name], os.sep, seq_length)
+    y_left_tv = '{}{}y_left_{}_train'.format(paths_dict[dataset_name], os.sep, seq_length)
+    y_right_tv = '{}{}y_right_{}_train'.format(paths_dict[dataset_name], os.sep, seq_length)
+
+    # Test data (20%)
+    acc_left_ts = '{}{}x_acc_left_{}_test'.format(paths_dict[dataset_name], os.sep, seq_length)
+    acc_right_ts = '{}{}x_acc_right_{}_test'.format(paths_dict[dataset_name], os.sep, seq_length)
+    y_left_ts = '{}{}y_left_{}_test'.format(paths_dict[dataset_name], os.sep, seq_length)
+    y_right_ts = '{}{}y_right_{}_test'.format(paths_dict[dataset_name], os.sep, seq_length)
+
+    indices_left = range(y_left.shape[0])
+    indices_right = range(y_right.shape[0])
+
+    ind_tv_left, ind_ts_left = train_test_split(indices_left, test_size=0.2, random_state=SEED, stratify=y_left)
+    ind_tv_right, ind_ts_right = train_test_split(indices_right, test_size=0.2, random_state=SEED, stratify=y_right)
+
+    y_train_left = y_left[ind_tv_left]
+    y_test_left = y_left[ind_ts_left]
+
+    print(np.unique(y_train_left, return_counts=True))
+    print(np.unique(y_test_left, return_counts=True))
+
+    print('Saving data to' + paths_dict[dataset_name])
+    np.save(acc_left_tv, acc_data_left[ind_tv_left])
+    np.save(acc_left_ts, acc_data_left[ind_ts_left])
+    np.save(acc_right_tv, acc_data_right[ind_tv_right])
+    np.save(acc_right_ts, acc_data_right[ind_ts_right])
+
+    np.save(y_left_tv, y_left[ind_tv_left])
+    np.save(y_left_ts, y_left[ind_ts_left])
+    np.save(y_right_tv, y_right[ind_tv_right])
+    np.save(y_right_ts, y_right[ind_ts_right])
+
+
 def preprocess_data(train_data, test_data, preprocess=None):
     if preprocess['type'] == 'standardize':
         return __standardize(train_data, test_data)
@@ -661,8 +919,17 @@ def preprocess_data(train_data, test_data, preprocess=None):
 
 def __scale(train_data, test_data):
     print('scaling data...')
-    data_max = max(max(np.max(train_data), abs(np.min(train_data))), max(np.max(test_data), abs(np.min(test_data))))
-    return train_data / data_max, test_data / data_max
+    for i in range(train_data.shape[2]):
+        min_tri = np.min(train_data[:, :, i])
+        min_tsi = np.min(test_data[:, :, i])
+        train_data[:, :, i] = train_data[:, :, i] - min_tri
+        test_data[:, :, i] = test_data[:, :, i] - min_tsi
+        max_tri = np.max(train_data[:, :, i])
+        max_tsi = np.max(test_data[:, :, i])
+        train_data[:, :, i] = train_data[:, :, i] / max_tri
+        test_data[:, :, i] = test_data[:, :, i] / max_tsi
+
+    return train_data, test_data
 
 
 def __standardize(train_data, test_data):

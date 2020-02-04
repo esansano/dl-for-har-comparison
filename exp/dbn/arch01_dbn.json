@@ -6,7 +6,7 @@
       "name": "rbm_1",
       "type": "rbm",
       "size": 512,
-      "act": "relu",
-    },
+      "act": "relu"
+    }
   ]
 }

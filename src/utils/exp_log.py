@@ -103,5 +103,6 @@ class Color:
     yellow = '\033[93m'
     magenta = '\033[95m'
     grey = '\033[90m'
+    light_grey = '\033[37m'
     black = '\033[90m'
-    default = '\033[99m'
+    default = light_grey

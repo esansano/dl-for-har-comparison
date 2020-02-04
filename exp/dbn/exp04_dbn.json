@@ -16,18 +16,11 @@
       "weight_decay": 0.00005
     }
   },
-  "learning_rate": 0.005,
-  "learning_rate_rbm": 0.005,
+  "learning_rate": 0.2,
+  "learning_rate_rbm": 0.00005,
   "batch_size": 1000,
-  "settings": {
-    "max_epochs": 2000,
-    "early_stop": 50,
-    "update": [
-      "epoch",
-      "loss_train",
-      "loss_validation",
-      "prediction",
-      "truth"
-    ]
-  }
+  "patience_rbm": 1,
+  "patience_ft": 10,
+  "max_epochs_rbm": 1000,
+  "max_epochs_ft": 2000
 }

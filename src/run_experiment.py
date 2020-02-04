@@ -1,8 +1,12 @@
 import argparse
 import json
 import os
+import time
+
 import torch
 import numpy as np
+from sklearn.metrics import accuracy_score, f1_score
+
 from lab import lab
 from utils import datamanager as dm
 from utils.exp_log import Logger
@@ -20,6 +24,7 @@ class Experiment:
 
     def __init__(self, exp_def_file, dataset, n_folds, save_log):
         self.exp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'exp', exp_def_file + '.json')
+        self.exp_name = exp_def_file.split('/')[-1]
         self.dataset = dataset
         self.n_folds = n_folds
         self.k_fold = 1
@@ -48,22 +53,32 @@ class Experiment:
                              save_log=self.save_log, log_path=log_path)
 
         ds = self.__load_data__(self.dataset, gyro=gyro, preprocess=preprocess)
-
+        gyro = gyro and ds.x_gyr_train is not None
         x, y = np.concatenate((ds.x_acc_train, ds.x_gyr_train), axis=2) if gyro else ds.x_acc_train, ds.y_train
-        x_ts, y_ts = np.concatenate((ds.x_acc_test, ds.x_gyr_test), axis=2) if gyro else ds.x_acc_test, ds.y_test
+        x_ts_np, y_ts_np = np.concatenate((ds.x_acc_test, ds.x_gyr_test), axis=2) if gyro else ds.x_acc_test, ds.y_test
 
         print("Test: features shape, labels shape, mean, standard deviation")
-        print(x_ts.shape, y_ts.shape, np.mean(x_ts), np.std(x_ts))
+        print(x_ts_np.shape, y_ts_np.shape, np.mean(x_ts_np), np.std(x_ts_np))
 
         if arch_type == 'cnn':
-            x_ts = np.reshape(x_ts, newshape=(x_ts.shape[0], 1, x_ts.shape[1], x_ts.shape[2]))
+            x_ts_np = np.reshape(x_ts_np, newshape=(x_ts_np.shape[0], 1, x_ts_np.shape[1], x_ts_np.shape[2]))
+        elif arch_type == 'dbn':
+            x = np.reshape(x, newshape=(x.shape[0], x.shape[1] * x.shape[2]))
+            x_ts_np = np.reshape(x_ts_np, newshape=(x_ts_np.shape[0], x_ts_np.shape[1] * x_ts_np.shape[2]))
 
-        x_ts = torch.from_numpy(x_ts).type(torch.FloatTensor)
-        y_ts = torch.from_numpy(y_ts).type(torch.LongTensor)
+        use_cuda = torch.cuda.is_available()
+        device = torch.device("cuda" if use_cuda else "cpu")
+        print(f'Using device: {device}')
+        print('Test: features shape, labels shape, mean, standard deviation')
+        print(x_ts_np.shape, y_ts_np.shape, np.mean(x_ts_np), np.std(x_ts_np))
+
+        x_ts = torch.from_numpy(x_ts_np).float().to(device)
+        y_ts = torch.from_numpy(y_ts_np).long().to(device)
         
         n_out = np.unique(y).size
         skf = StratifiedKFold(n_splits=self.n_folds, shuffle=True, random_state=0)
         self.k_fold = 1
+        row = 'fold, time, best_epoch, best_accuracy, best_validation_f1, best_test_f1\n'
         for tr_i, va_i in skf.split(X=x, y=y):
             x_tr, x_va = x[tr_i], x[va_i]
             y_tr, y_va = y[tr_i], y[va_i]
@@ -73,26 +88,50 @@ class Experiment:
             print("Validation: features shape, labels shape, mean, standard deviation")
             print(x_va.shape, y_va.shape, np.mean(x_va), np.std(x_va))
 
-            if arch_type == 'cnn':
-                x_tr = np.reshape(x_tr, newshape=(x_tr.shape[0], 1, x_tr.shape[1], x_tr.shape[2]))
-                x_va = np.reshape(x_va, newshape=(x_va.shape[0], 1, x_va.shape[1], x_va.shape[2]))
+            if arch_type == 'dbn':
+                lab_experiment = lab.build_experiment(self.exp_path, n_out, seed=0)
+                start = time.time()
+                lab_experiment.fit(x_tr, y_tr)
 
-            x_tr = torch.from_numpy(x_tr).type(torch.FloatTensor)
-            y_tr = torch.from_numpy(y_tr).type(torch.LongTensor)
-            x_va = torch.from_numpy(x_va).type(torch.FloatTensor)
-            y_va = torch.from_numpy(y_va).type(torch.LongTensor)
+                end = time.time()
+                elapsed = end - start
+                y_pred_va = lab_experiment.predict(x_va)
+                best_validation_f1 = f1_score(y_va, y_pred_va, average='weighted')
 
-            print(np.unique(y_tr.numpy(), return_counts=True))
-            print(np.unique(y_va.numpy(), return_counts=True))
-            print(np.unique(y_ts.numpy(), return_counts=True))
+                epochs = lab_experiment.n_epochs
+                # Test
+                y_pred = lab_experiment.predict(x_ts_np)
+                best_accuracy = accuracy_score(y_ts_np, y_pred)
+                best_test_f1 = f1_score(y_ts_np, y_pred, average='weighted')
 
-            lab_experiment = lab.build_experiment(self.exp_path, n_out, seed=0)
-            print(lab_experiment.model)
+                row += f'{self.k_fold},{elapsed},{epochs},{best_accuracy},{best_validation_f1},{best_test_f1}\n'
 
-            lab_experiment.run(train=TensorDataset(x_tr, y_tr),
-                               validation=TensorDataset(x_va, y_va),
-                               test=TensorDataset(x_ts, y_ts),
-                               update_callback=self.update)
+                if self.save_log:
+                    log_file_name = f'{self.dataset}_{self.exp_name}.csv'
+                    log_file = os.path.join(log_path, log_file_name)
+                    with open(log_file, "w") as text_file:
+                        text_file.write(row)
+            else:
+                if arch_type == 'cnn':
+                    x_tr = np.reshape(x_tr, newshape=(x_tr.shape[0], 1, x_tr.shape[1], x_tr.shape[2]))
+                    x_va = np.reshape(x_va, newshape=(x_va.shape[0], 1, x_va.shape[1], x_va.shape[2]))
+
+                x_tr = torch.from_numpy(x_tr).float().to(device)
+                y_tr = torch.from_numpy(y_tr).long().to(device)
+                x_va = torch.from_numpy(x_va).float().to(device)
+                y_va = torch.from_numpy(y_va).long().to(device)
+
+                print(np.unique(y_tr.cpu().numpy(), return_counts=True))
+                print(np.unique(y_va.cpu().numpy(), return_counts=True))
+                print(np.unique(y_ts.cpu().numpy(), return_counts=True))
+
+                lab_experiment = lab.build_experiment(self.exp_path, n_out, seed=0)
+                print(lab_experiment.model)
+
+                lab_experiment.train(train_data=TensorDataset(x_tr, y_tr),
+                                     validation_data=TensorDataset(x_va, y_va),
+                                     test_data=TensorDataset(x_ts, y_ts),
+                                     update_callback=self.update)
             self.k_fold += 1
 
 
